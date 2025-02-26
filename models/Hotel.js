@@ -9,32 +9,36 @@ const hotelSchema = new mongoose.Schema({
     tel: {
         type: String,
         required: [true, 'Please add a telephone number'],
-        match: [/^\d{10}$/, 'Telephone number must be exactly 10 digits']
+        unique: true
     },
     address: {
-        province: {
+        city: {
             type: String,
-            required: [true, 'Please add a province']
+            required: [true, 'Please add a city']
         },
-        district: {
+        street_name: {
             type: String,
-            required: [true, 'Please add a district']
+            required: [true, 'Please add a street name']
         },
-        street: {
+        street_address: {
             type: String,
-            required: [true, 'Please add a street']
+            required: [true, 'Please add a street address']
         },
         zipcode: {
             type: String,
-            required: [true, 'Please add a postal'] ,
+            required: [true, 'Please add a zipcode'] ,
             match: [/^\d{1,5}$/, 'Zipcode must be at most 5 digits']
         }
     },
-    location_number: {
-        type: Number,
-        required: [true, 'Please add a number'],
-        min: [1, 'location_number must be at least 1'],
-        max: [999, 'location_number must be at most 999']
+    location: {
+        latitude: {
+            type: Number,
+            required: [true, 'Please add a latitude']
+        },
+        longtitude: {
+            type: Number,
+            required: [true, 'Please add a longtitude']
+        }
     }
 },{
     toJSON: {virtuals: true},

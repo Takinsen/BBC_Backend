@@ -21,7 +21,7 @@ const accountSchema = new mongoose.Schema({
         required: [true, 'Please add an email'],
         unique: true,
         match: [
-            /^(([^<>()[]\.,;:\s@"]+(.[^<>()[]\.,;:\s@"]+)*)|(".+"))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/,
+            /^(?![.-])[A-Za-z0-9._%+-]+(?:[A-Za-z0-9-]*[A-Za-z0-9])?@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
             'Please add a valid email'
         ]
     },

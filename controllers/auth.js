@@ -52,6 +52,7 @@ export const getMe = async(req,res,next)=>{
     res.status(200).json({
         success : true,
         message : "Get your account information successfully",
+        role : account.role,
         account
     })
 }
@@ -71,6 +72,7 @@ const sendTokenResponse = (account, statusCode, message , res) => {
     res.status(statusCode).cookie('token',token,options).json({
         success: true,
         message,
+        role : account.role,
         account,
         token
     });
