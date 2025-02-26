@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import { connectDB } from './config/db.js';
 
 // API
+import auth from './routes/auth.js';
 
 // -------------------------- Setting -------------------------- //
 
@@ -25,27 +26,27 @@ app.use(express.json());
 app.use(cookieParser());
 
 // API Routes 
+app.use('/api/auth', auth);
 
 // -------------------------- Start the Server -------------------------- //
 
 const PORT = process.env.PORT || 8000;
 
-const initializeServer = async () =>{
-    try{
+const initializeServer = async () => {
+    try {
         console.log('Backend server is starting...');
         connectDB();
-        app.listen(PORT, () => { console.log(`Backend server is ready at http://localhost:${PORT}`);});
-    }
-    catch(err){
-        console.log("Failed to start backend server:" , err);
+        const server = app.listen(PORT, () => { 
+            console.log(`Backend server is ready at http://localhost:${PORT}`);
+        });
+        // -------------------------- Handle Error -------------------------- //
+        process.on('unhandledRejection' , (err , promise)=> {
+            console.log(`Error : ${err.message}`);
+            server.close(()=>process.exit);
+        });
+    } catch (err) {
+        console.log("Failed to start backend server:", err);
     }
 }
 
 initializeServer();
-
-// -------------------------- Handle Error -------------------------- //
-
-process.on('unhandledRejection' , (err , promise)=> {
-    console.log(`Error : ${err.message}`);
-    server.close(()=>process.exit);
-});
