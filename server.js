@@ -3,6 +3,7 @@
 // Library
 import express from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
 // Function
 import { connectDB } from './config/db.js';
@@ -19,6 +20,9 @@ const app = express();
 
 // Body parser
 app.use(express.json());
+
+// Cookie parser
+app.use(cookieParser());
 
 // API Routes 
 
