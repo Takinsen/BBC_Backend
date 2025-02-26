@@ -1,0 +1,7 @@
+first_name,last_name,tel,email,password,role
+Alice,Smith,1234567890,alice@example.com,Alice1234,user
+Bob,Johnson,1234567891,bob@example.com,Bob1234,user
+Charlie,Davis,1234567892,charlie@example.com,Charlie1234,user
+Admin1,One,9876543210,admin1@example.com,Admin11234,admin
+Admin2,Two,9876543211,admin2@example.com,Admin21234,admin
+Admin3,Three,9876543212,admin3@example.com,Admin31234,admin
