@@ -33,8 +33,13 @@ const PORT = process.env.PORT || 8000;
 const initializeServer = async () =>{
     try{
         console.log('Backend server is starting...');
-        connectDB();
-        app.listen(PORT, () => { console.log(`Backend server is ready at http://localhost:${PORT}`);});
+        await connectDB();
+        const server = app.listen(PORT, () => { console.log(`Backend server is ready at http://localhost:${PORT}`);});
+        // -------------------------- Handle Error -------------------------- //
+        process.on('unhandledRejection' , (err , promise)=> {
+            console.log(`Error : ${err.message}`);
+            server.close(()=>process.exit);
+        });
     }
     catch(err){
         console.log("Failed to start backend server:" , err);
@@ -42,10 +47,3 @@ const initializeServer = async () =>{
 }
 
 initializeServer();
-
-// -------------------------- Handle Error -------------------------- //
-
-process.on('unhandledRejection' , (err , promise)=> {
-    console.log(`Error : ${err.message}`);
-    server.close(()=>process.exit);
-});
