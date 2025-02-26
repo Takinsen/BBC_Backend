@@ -36,6 +36,11 @@ const accountSchema = new mongoose.Schema({
         enum : ["user", "hotel_admin", "super_admin"] , 
         required : true 
     },
+    hotel_id : {
+        type : mongoose.Schema.ObjectId , 
+        ref : 'Account',
+        default : null 
+    },
     create_at:{
         type: Date,
         default: Date.now
@@ -60,7 +65,7 @@ accountSchema.pre('save' , async function(next){
 });
 
 accountSchema.methods.getSignedJwtToken = function(){
-    return jwt.sign({id:this._id} , process.env.JWT_SECRET,{
+    return jwt.sign({id:this._id , hotel_id:this.hotel_id} , process.env.JWT_SECRET,{
         expiresIn: process.env.JWT_EXPIRE
     });
 }

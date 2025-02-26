@@ -1,20 +1,53 @@
-import Booking from '../models/Booking';
-import Hotel from '../models/Hotel';
+import Booking from '../models/Booking.js';
+import Hotel from '../models/Hotel.js';
+import Room from '../models/Room.js';
 
 export const getBookings = async (req,res,next) => {
 
     let query;
     // General users can see only their Bookings!
     if(req.user.role === 'hotel_admin'){
-        query = Booking.find({hotel_id : req.user.hotel_id})
-        .populate({path : 'hotel_id' , select : 'name tel address.city address.street_name' });
+
+        if(!req.user.hotel_id) return res.status(400).json("Only hotel admin with hotel_id can view hotel's booking");
+
+        query = Booking.find({hotel_id : req.user.hotel_id}).populate({
+            path : 'account_id' , 
+            select : 'first_name last_name' 
+        }).populate({
+            path : 'hotel_id' , 
+            select : 'name tel address' 
+        }).populate({
+            path : 'room_id' , 
+            select : 'room_number capacity price_per_night' 
+        });
+
     }
     else if(req.user.role === 'user'){
-        query = Booking.find({user_id : req.user.id})
-        .populate({path : 'hotel_id' , select : 'name tel address.city address.street_name' });
+
+        query = Booking.find({user_id : req.user.id}).populate({
+            path : 'account_id' , 
+            select : 'first_name last_name' 
+        }).populate({
+            path : 'hotel_id' , 
+            select : 'name tel address' 
+        }).populate({
+            path : 'room_id' , 
+            select : 'room_number capacity price_per_night' 
+        });
+
     } else {
-        query = Booking.find()
-        .populate({path : 'hotel_id' , select : 'name tel address.city address.street_name' });
+
+        query = Booking.find().populate({
+            path : 'account_id' , 
+            select : 'first_name last_name' 
+        }).populate({
+            path : 'hotel_id' , 
+            select : 'name tel address' 
+        }).populate({
+            path : 'room_id' , 
+            select : 'room_number capacity price_per_night' 
+        });
+
     }
 
     try {
@@ -35,19 +68,64 @@ export const getBookings = async (req,res,next) => {
 
 export const getBooking = async (req,res,next) => {
     try {
-        const Booking = await Booking.findById(req.params.id).populate({
-            path: 'Hotel',
-            select: 'name description tel'
-        });
 
-        if(!Booking) return res.status(404).json({
+        if(req.user.role === 'hotel_admin'){
+
+            if(!req.user.hotel_id) return res.status(400).json("Only hotel admin with hotel_id can view hotel's booking");
+
+            // Check hotel's booking ownership
+            query = Booking.findOne({_id : req.params.id , hotel_id : req.user.hotel_id}).populate({
+                path : 'account_id' , 
+                select : 'first_name last_name' 
+            }).populate({
+                path : 'hotel_id' , 
+                select : 'name tel address' 
+            }).populate({
+                path : 'room_id' , 
+                select : 'room_number capacity price_per_night' 
+            });
+
+        }
+        else if(req.user.role === 'user'){
+
+            // Check user's booking ownership
+            query = Booking.findOne({_id : req.params.id , user_id : req.user.id}).populate({
+                path : 'account_id' , 
+                select : 'first_name last_name' 
+            }).populate({
+                path : 'hotel_id' , 
+                select : 'name tel address' 
+            }).populate({
+                path : 'room_id' , 
+                select : 'room_number capacity price_per_night' 
+            });
+
+        } else {
+
+            // Super_admin can view any booking
+            query = Booking.findById(req.params.id).populate({
+                path : 'account_id' , 
+                select : 'first_name last_name' 
+            }).populate({
+                path : 'hotel_id' , 
+                select : 'name tel address' 
+            }).populate({
+                path : 'room_id' , 
+                select : 'room_number capacity price_per_night' 
+            });
+
+        }
+
+        const booking = await query;
+
+        if(!booking) return res.status(404).json({
             success: false , 
-            message: `No Booking with the id of ${req.params.id}`
+            message: `No booking with the id of ${req.params.id}`
         });
 
         res.status(200).json({
             success : true,
-            data : Booking
+            booking
         });
     } catch {
         console.log(err.stack);
@@ -58,73 +136,104 @@ export const getBooking = async (req,res,next) => {
     }
 }
 
-//@desc Add single Booking
-//@route POST /api/v1/Hotels/:HotelId/Bookings/
-//@access Private
-exports.addBooking = async (req,res,next) => {
+export const addBooking = async (req,res,next) => {
     try {
 
-        console.log(req.user.id);
-        // Add user Id to req.body
-        req.body.user = req.user.id;
+        if(req.user.role === 'user'){
 
-        // Check for existed Booking
-        const existedBookings = await Booking.find({user: req.user.id});
+            req.body.account_id = req.user.id;
 
-        // If the user is not an admin, they can only create 3 Booking.
-        if(existedBookings.length >= 3 && req.user.role !== 'admin'){
-            return res.status(400).json({
+            const existedBookings = await Booking.find({account_id: req.user.id});
+            // user can only create 3 booking.
+            if(existedBookings.length >= 3){
+                return res.status(400).json({
+                    success: false , 
+                    message: `The user with ID ${req.user.id} has already made 3 bookings`
+                });
+            }
+
+            const hotel = await Hotel.findById(req.body.hotel_id);
+            // Check if hotel existed
+            if(!hotel) return res.status(404).json({
                 success: false , 
-                message: `The user with ID ${req.user.id} has already made 3 Bookings`
+                message: `No hotel with the id of ${req.body.hotel_id}`
             });
+
+        } else if(req.user.role === 'hotel_admin'){
+
+            req.body.hotel_id =  req.user.hotel_id;
+
+            const hotel = await Hotel.findById(req.user.hotel_id);
+            // Check if hotel existed
+            if(!hotel) return res.status(404).json({
+                success: false , 
+                message: `Your hotel with the id of ${req.user.hotel_id} is not existed`
+            });
+
         }
 
-        req.body.Hotel = req.params.HotelId;
+        // Check if room is existed and available
+        const room = await Room.findOne({room_number : req.body.room_number , hotel_id : req.body.hotel_id});
+        if(!room) 
+            return res.status(404).json({
+                success: false , 
+                message: `No room with room number ${req.body.room_number} in this hotel`
+            });
+        if(room.status !== 'available') 
+            return res.status(400).json({
+                success: false , 
+                message: `the room in hotel with id ${req.body.hotel_id} is not available`
+            });
 
-        const Hotel = await  Hotel.findById(req.params.HotelId);
-        
-        if(!Hotel) return res.status(404).json({
-            success: false , 
-            message: `No Hotel with the id of ${req.params.HotelId}`
+        // Check if user already booking this room in hotel
+        const is_already_booking = await Booking.findOne({
+            account_id : req.body.account_id,
+            hotel_id : req.body.hotel_id,
+            room_id : room.id
         });
+        if(is_already_booking)
+            return res.status(400).json({
+                success: false , 
+                message: `account ${req.body.account_id} is already booking this room in hotel`
+            });
 
-        const Booking = await Booking.create(req.body);
+        req.body.room_id = room.id;
+
+        const booking = await Booking.create(req.body);
 
         res.status(200).json({
             success : true,
-            data : Booking
+            message : "Create booking successfully",
+            booking
         });
     } catch (err) {
         console.log(err.stack);
         res.status(500).json({
             success : false,
-            message : "Cannot create Booking",
+            message : "Cannot create booking",
             error : err.stack
         });
     }
 }
 
-//@desc Update Booking
-//@route PUT /api/v1/Bookings/:id
-//@access Private
-exports.updateBooking = async (req,res,next) => {
+export const updateBooking = async (req,res,next) => {
     try {
 
-        let Booking = await Booking.findById(req.params.id);
+        let booking = await Booking.findById(req.params.id);
         
-        if(!Booking) return res.status(404).json({
+        if(!booking) return res.status(404).json({
             success: false , 
-            message: `No Booking with the id of ${req.params.id}`
+            message: `No booking with the id of ${req.params.id}`
         });
 
-        if(Booking.user.toString() !== req.user.id && req.user.role !== 'admin'){
+        if(booking.account_id.toString() !== req.user.id && req.user.role !== 'admin'){
             return res.status(401).json({
                 success: false , 
-                message: `The user with ID ${req.user.id} is not authorized to update this Booking`
+                message: `The user with the id ${req.user.id} is not authorized to update this booking`
             });
         }
 
-        Booking = await Booking.findByIdAndUpdate(
+        booking = await Booking.findByIdAndUpdate(
             req.params.id , 
             req.body ,
             { new : true , runValidators: true}
@@ -132,35 +241,34 @@ exports.updateBooking = async (req,res,next) => {
 
         res.status(200).json({
             success : true,
-            data : Booking
+            updated_booking : booking
         });
+
     } catch (err) {
         console.log(err.stack);
         res.status(500).json({
             success : false,
-            message : "Cannot update Booking",
+            message : "Cannot update booking",
             error : err.stack
         });
     }
 }
 
-//@desc Delete Booking
-//@route Delete /api/v1/Bookings/:id
-//@access Private
-exports.deleteBooking = async (req,res,next) => {
+export const deleteBooking = async (req,res,next) => {
     try {
 
-        let Booking = await Booking.findById(req.params.id);
+        let booking = await Booking.findById(req.params.id);
         
-        if(!Booking) return res.status(404).json({
+        if(!booking) return res.status(404).json({
             success: false , 
-            message: `No Booking with the id of ${req.params.id}`
+            message: `No booking with the id of ${req.params.id}`
         });
 
-        if(Booking.user.toString() !== req.user.id && req.user.role !== 'admin'){
+        // Ownership
+        if(booking.account_id.toString() !== req.user.id && req.user.role !== 'admin'){
             return res.status(401).json({
                 success: false , 
-                message: `The user with ID ${req.user.id} is not authorized to delete this Booking`
+                message: `The account with ID ${req.user.id} is not authorized to delete this booking`
             });
         }
 
@@ -168,13 +276,13 @@ exports.deleteBooking = async (req,res,next) => {
 
         res.status(200).json({
             success : true,
-            deleted_Booking : Booking
+            deleted_booking : booking
         });
     } catch (err) {
         console.log(err.stack);
         res.status(500).json({
             success : false,
-            message : "Cannot delete Booking",
+            message : "Cannot delete booking",
             error : err.stack
         });
     }

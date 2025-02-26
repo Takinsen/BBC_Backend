@@ -22,6 +22,10 @@ const bookSchema = new mongoose.Schema({
         required : true ,
         default : "pending"
     },
+    member : {
+        adult : { type : Number , default : 0 },
+        child : { type : Number , default : 0 }
+    },
     check_in_date : {
         type: Date
     },
@@ -29,10 +33,6 @@ const bookSchema = new mongoose.Schema({
         type: Date
     },
     created_at : {
-        type: Date ,
-        default: Date.now
-    },
-    updated_at : {
         type: Date ,
         default: Date.now
     }
