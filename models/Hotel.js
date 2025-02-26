@@ -36,6 +36,16 @@ const hotelSchema = new mongoose.Schema({
         min: [1, 'location_number must be at least 1'],
         max: [999, 'location_number must be at most 999']
     }
+},{
+    toJSON: {virtuals: true},
+    toObject: {virtuals: true}
+});
+
+hotelSchema.virtual('bookings' , {
+    ref : 'Booking',
+    localField : '_id',
+    foreignField : 'hotel_id',
+    justOne : false
 });
 
 const Hotel = mongoose.model('Hotel', hotelSchema);
