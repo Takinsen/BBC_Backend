@@ -33,13 +33,14 @@ app.use('/api/auth' , auth);
 app.use('/api/hotels' , hotels);
 app.use('/api/rooms' , rooms);
 app.use('/api/bookings' , bookings);
+app.use('/api/auth', auth);
 
 // -------------------------- Start the Server -------------------------- //
 
 const PORT = process.env.PORT || 5000;
 
-const initializeServer = async () =>{
-    try{
+const initializeServer = async () => {
+    try {
         console.log('Backend server is starting...');
         await connectDB();
         const server = app.listen(PORT, () => { console.log(`Backend server is ready at http://localhost:${PORT}`);});
