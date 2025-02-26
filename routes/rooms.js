@@ -4,4 +4,13 @@ import { protect , authorize } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+router.route('/')
+.get(room.getRooms)
+.post(protect , authorize('super_admin') , room.createRoom);
+
+router.route('/:id')
+.get(room.getRoom)
+.put(protect , authorize('super_admin') , room.updateRoom)
+.delete(protect , authorize('super_admin') , room.deleteRoom);
+
 export default router;

@@ -42,6 +42,16 @@ const accountSchema = new mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+},{
+    toJSON: {virtuals: true},
+    toObject: {virtuals: true}
+});
+
+accountSchema.virtual('bookings' , {
+    ref : 'Booking',
+    localField : '_id',
+    foreignField : 'account_id',
+    justOne : false
 });
 
 accountSchema.pre('save' , async function(next){

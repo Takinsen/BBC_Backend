@@ -8,8 +8,7 @@ const roomSchema = new mongoose.Schema({
     },
     room_number : {
         type : String ,
-        required : true ,
-        unique : true
+        required : true
     },
     capacity : {
         type : Number ,
@@ -26,6 +25,8 @@ const roomSchema = new mongoose.Schema({
         default : "available"
     }  
 });
+
+roomSchema.index({ hotel_id: 1, room_number: 1 }, { unique: true });
 
 const Room = mongoose.model('Room', roomSchema);
 export default Room;
