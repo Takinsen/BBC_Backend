@@ -13,6 +13,7 @@ import auth from './routes/auth.js';
 import hotels from './routes/hotels.js';
 import rooms from './routes/rooms.js';
 import bookings from './routes/bookings.js';
+import accounts from './routes/accounts.js';
 
 // -------------------------- Setting -------------------------- //
 
@@ -34,6 +35,7 @@ app.use('/api/hotels' , hotels);
 app.use('/api/rooms' , rooms);
 app.use('/api/bookings' , bookings);
 app.use('/api/auth', auth);
+app.use('/api/accounts', accounts);
 
 // -------------------------- Start the Server -------------------------- //
 
