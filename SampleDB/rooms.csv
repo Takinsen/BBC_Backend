@@ -1,7 +1,0 @@
-hotel_id,room_number,capacity,price_per_night,status
-67bc90e5c32bf0b322db4fee,001,2,100,available
-67bc90e5c32bf0b322db4fee,002,4,180,not available
-67bc90e5c32bf0b322db4fef,003,2,120,available
-67bc90e5c32bf0b322db4fef,004,3,150,available
-67bc90e5c32bf0b322db4ff,005,1,80,not available
-67bc90e5c32bf0b322db4ff,006,5,220,available

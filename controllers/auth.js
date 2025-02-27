@@ -4,6 +4,18 @@ import Account from "../models/Account.js";
 export const register = async (req, res) => {
     try{
 
+        // Check if email and tel already exists
+        const email = req.body.email;
+        const tel = req.body.tel;
+
+        const checkEmail = await Account.findOne({ email });
+        const checkTel = await Account.findOne({ tel });
+        if(checkEmail || checkTel){
+            res.status(400).json({
+                success: false,
+                message: "Email or tel already exists , please try again"
+            });
+        }
         const account = await Account.create(req.body);
 
         sendTokenResponse(account , 200 , "Register successfully" , res);
