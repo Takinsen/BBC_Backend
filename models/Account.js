@@ -60,6 +60,20 @@ accountSchema.virtual('bookings' , {
 });
 
 accountSchema.pre('save' , async function(next){
+    // Format telephone number as xxx-xxx-xxxx
+    if (this.tel) {
+        // Remove all non-numeric characters
+        this.tel = this.tel.replace(/\D/g, '');
+
+        // If the number has 10 digits, format it as xxx-xxx-xxxx
+        if (this.tel.length === 10) {
+            this.tel = this.tel.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3');
+        } else {
+            next(new Error('Telephone number must contain exactly 10 digits.'));
+            return;
+        }
+    }
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password,salt);
 });

@@ -96,6 +96,19 @@ export const getRoom = async (req , res , next) => {
 
 export const createRoom = async (req , res , next) => {
     try{
+        const {role,hotel_id} = req.user ;
+
+        // if role is hotel_admin
+        // check if hotel_id from hotel_admin and hotel_id from body is match
+        if(role === 'hotel_admin'){
+            if (String(req.body.hotel_id) !== String(hotel_id)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `You are not authorized to create a room for this hotel`
+                });
+            }
+        }
+
         const room = await Room.create(req.body);
         res.status(201).json({ success: true , new_room : room });
     } catch (err){
@@ -107,12 +120,24 @@ export const updateRoom = async(req , res , next) => {
     try{
         // เช็คว่ามี room ตาม id ทีระบุหรือไม่
         const room_before = await Room.findById(req.params.id);
+        const {role,hotel_id} = req.user ;
 
         if(!room_before) 
             return res.status(404).json({
                 success: false , 
                 message : `Cannot find room with the id : ${req.params.id}`
             });
+
+        if (role === 'hotel_admin') {
+            console.log(room_before.hotel_id);
+            console.log(hotel_id);
+            if (String(room_before.hotel_id) !== String(hotel_id)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `You are not authorized to update this room`
+                });
+            }
+        }
         
         // อัพเดท room ตาม id ทีระบุ
         const room_after = await Room.findByIdAndUpdate(
@@ -136,13 +161,23 @@ export const deleteRoom = async(req , res , next) => {
     try{
         // เช็คว่ามี room ตาม id ทีระบุหรือไม่
         const room = await Room.findById(req.params.id);
+        const {role,hotel_id} = req.user ;
 
         if(!room)
             return res.status(404).json({
                 success: false , 
                 message : `Cannot find room with the id : ${req.params.id}`
             });
-        
+
+        if (role === 'hotel_admin') {
+            if (String(room.hotel_id) !== String(hotel_id)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `You are not authorized to delete this room`
+                });
+            }
+        }
+            
         // ลบ Booking ที่มี room_id ตรงกับ id ที่ระบุ ( Cascade delete )
         await Booking.deleteMany({ room_id : req.params.id });
 

@@ -36,7 +36,7 @@ export const protect = async (req, res, next) => {
 // เช็คว่ามี role ที่สามารถเข้าถึง route นี้ได้หรือไม่
 export const authorize = (...roles) => {
     return (req, res, next) => {
-        if(!roles.includes(req.user.role) || req.user.role === 'super_admin'){
+        if(!roles.includes(req.user.role)){
             return res.status(403).json({
                 success: false,
                 message: `Account role ${req.user.role} is not authorized to access this route`

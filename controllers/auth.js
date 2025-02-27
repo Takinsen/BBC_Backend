@@ -5,8 +5,7 @@ export const register = async (req, res) => {
     try{
 
         // Check if email and tel already exists
-        const email = req.body.email;
-        const tel = req.body.tel;
+        const { email , tel } = req.body;
 
         const checkEmail = await Account.findOne({ email });
         const checkTel = await Account.findOne({ tel });
