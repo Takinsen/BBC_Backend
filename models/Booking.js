@@ -18,7 +18,7 @@ const bookSchema = new mongoose.Schema({
     },
     status : { 
         type : String , 
-        enum : ["pending", "accpet", "reject"] , 
+        enum : ["pending", "accept", "reject"] , 
         required : true ,
         default : "pending"
     },

@@ -152,9 +152,7 @@ export const addBooking = async (req,res,next) => {
                 });
             }
 
-            const hotel = await Hotel.findById(req.body.hotel_id);
-            // Check if hotel existed
-            if(!hotel) return res.status(404).json({
+            if(!hotelExistValidation(req.body.hotel_id)) return res.status(404).json({
                 success: false , 
                 message: `No hotel with the id of ${req.body.hotel_id}`
             });
@@ -163,11 +161,9 @@ export const addBooking = async (req,res,next) => {
 
             req.body.hotel_id =  req.user.hotel_id;
 
-            const hotel = await Hotel.findById(req.user.hotel_id);
-            // Check if hotel existed
-            if(!hotel) return res.status(404).json({
+            if(!hotelExistValidation(req.body.hotel_id)) return res.status(404).json({
                 success: false , 
-                message: `Your hotel with the id of ${req.user.hotel_id} is not existed`
+                message: `No hotel with the id of ${req.body.hotel_id}`
             });
 
         }
@@ -183,18 +179,6 @@ export const addBooking = async (req,res,next) => {
             return res.status(400).json({
                 success: false , 
                 message: `the room in hotel with id ${req.body.hotel_id} is not available`
-            });
-
-        // Check if user already booking this room in hotel
-        const is_already_booking = await Booking.findOne({
-            account_id : req.body.account_id,
-            hotel_id : req.body.hotel_id,
-            room_id : room.id
-        });
-        if(is_already_booking)
-            return res.status(400).json({
-                success: false , 
-                message: `account ${req.body.account_id} is already booking this room in hotel`
             });
 
         req.body.room_id = room.id;
@@ -219,6 +203,8 @@ export const addBooking = async (req,res,next) => {
 export const updateBooking = async (req,res,next) => {
     try {
 
+        // Validation
+
         let booking = await Booking.findById(req.params.id);
         
         if(!booking) return res.status(404).json({
@@ -232,6 +218,8 @@ export const updateBooking = async (req,res,next) => {
                 message: `The user with the id ${req.user.id} is not authorized to update this booking`
             });
         }
+
+        // Updating
 
         booking = await Booking.findByIdAndUpdate(
             req.params.id , 
@@ -286,4 +274,105 @@ export const deleteBooking = async (req,res,next) => {
             error : err.stack
         });
     }
+
+}
+
+// Admin
+
+export const acceptBooking = async (req,res,next) => {
+
+    try{
+
+        const booking = await Booking.findByIdAndUpdate(
+            req.params.id , 
+            { $set : { status : 'accept' }},
+            { new : true , runValidators : true }
+        );
+
+        res.status(200).json({
+            success : true,
+            message : "Accept booking successfully",
+            accepted_booking : booking
+        });
+
+
+    } catch (err) {
+        res.status(500).json({
+            success : false,
+            message : "Cannot accept booking",
+            error : err.stack
+        });
+    }    
+
+}
+
+export const rejectBooking = async (req,res,next) => {
+
+    try{
+
+        const booking = await Booking.findByIdAndUpdate(
+            req.params.id , 
+            { $set : { status : 'reject' }},
+            { new : true , runValidators : true }
+        );
+
+        res.status(200).json({
+            success : true,
+            message : "Reject booking successfully",
+            reject_booking : booking
+        });
+
+
+    } catch (err) {
+        res.status(500).json({
+            success : false,
+            message : "Cannot reject booking",
+            error : err.stack
+        });
+    }    
+
+}
+
+// Validation function
+
+const hotelExistValidation = async (hotel_id) => {
+    // Check if hotel existed
+    const hotel = await Hotel.findById(hotel_id);
+    if(!hotel) return res.status(404).json({
+        success: false , 
+        message: `No hotel with the id of ${hotel_id}`
+    });
+}
+
+const RoomExistValidation = async (room_id) => {
+    // Check if room existed
+    const room = await Room.findById(room_id);
+    if(!room) return res.status(404).json({
+        success: false , 
+        message: `No room with the id of ${room_id}`
+    });
+}
+
+const bookingExistValidation = async (booking_id) => {
+    // Check if booking existed
+    const booking = await Booking.findById(booking_id);
+    if(!booking) return res.status(404).json({
+        success: false , 
+        message: `No booking with the id of ${booking_id}`
+    });
+}
+
+const alreadyBookingValidation = async (user_id , hotel_id , room_id) => {
+
+    // Check if user already booking this room in hotel
+    const is_already_booking = await Booking.findOne({
+        user_id,
+        hotel_id,
+        room_id
+    });
+
+    if(is_already_booking) return false;
+
+    return true;
+
 }
