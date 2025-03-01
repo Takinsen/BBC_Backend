@@ -4,6 +4,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import mongoSanitize from 'express-mongo-sanitize';
 
 // Function
 import { connectDB } from './config/db.js';
@@ -28,6 +29,9 @@ app.use(express.json());
 
 // Cookie parser
 app.use(cookieParser());
+
+//Sanitize data
+app.use(mongoSanitize());
 
 // API Routes 
 app.use('/api/auth' , auth);
