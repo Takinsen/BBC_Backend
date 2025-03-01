@@ -17,13 +17,7 @@ const roomSchema = new mongoose.Schema({
     price_per_night : {
         type : Number ,
         required : true
-    },
-    status : { 
-        type : String , 
-        enum : ["available", "unavailable", "abandoned"] , 
-        required : true ,
-        default : "available"
-    }  
+    }
 });
 
 roomSchema.index({ hotel_id: 1, room_number: 1 }, { unique: true });

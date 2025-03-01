@@ -1,0 +1,96 @@
+@startuml HotelBookingUseCase_V3
+
+skinparam TitleFontSize 50    
+skinparam UsecaseFontSize 25  
+skinparam CaptionFontSize 20  
+skinparam ActorFontSize 30    
+skinparam ArrowFontSize 18    
+skinparam ArrowThickness 3
+
+title Hotel Booking System Use Case Diagram
+
+top to bottom direction
+
+skinparam Linetype ortho
+skinparam Nodesep 80
+skinparam Ranksep 150
+
+actor "User" as user
+actor "SuperAdmin" as super_admin #Red
+actor "HotelAdmin" as hotel_admin #Blue
+
+package "Authentication" as auth {
+    usecase "Register" as register
+    usecase "Login/\nLogout" as login_logout
+}
+
+package "Account" as account {
+    usecase "View\nAccounts" as view_accounts
+    usecase "Manage\nAccounts" as manage_accounts
+    manage_accounts ..> view_accounts : <<include>>
+}
+
+package "Hotel" as hotel {
+    usecase "View\nHotels" as view_hotels
+    usecase "Create\nHotel" as create_hotel
+    usecase "Manage\nHotels" as manage_hotels
+    manage_hotels ..> view_hotels : <<include>>
+    create_hotel ..> view_hotels : <<include>>
+}
+
+package "Room" as room {
+    usecase "View\nRooms" as view_rooms
+    usecase "Create\nRoom" as create_room
+    usecase "Manage\nRooms" as manage_rooms
+    manage_rooms ..> view_rooms : <<include>>
+    create_room ..> view_rooms : <<include>>
+}
+
+package "Booking" as booking {
+    usecase "View\nBookings" as view_bookings
+    usecase "Create\nBooking" as create_booking
+    usecase "Manage\nBookings" as manage_bookings
+    manage_bookings ..> view_bookings : <<include>>
+    create_booking ..> view_hotels : <<include>>
+    view_hotels ..> view_rooms : <<exclude>>
+}
+
+' Alignments
+hotel_admin -[hidden]up-- hotel
+user -[hidden]right-- account
+
+' User Actions
+user --> register
+user --> login_logout
+user --> manage_accounts : own account
+user --> view_hotels
+user ---> view_bookings : own bookings
+user ---> create_booking : at most 3 nights
+user ---> manage_bookings : own bookings
+
+' Super Admin Permissions (Red Arrows)
+super_admin -[#Red]--> view_accounts
+super_admin -[#Red]--> view_hotels
+super_admin -[#Red]--> view_rooms
+super_admin -[#Red]--> view_bookings
+super_admin -[#Red]--> create_room
+super_admin -[#Red]--> manage_rooms
+super_admin -[#Red]--> manage_accounts
+super_admin -[#Red]--> manage_hotels
+super_admin -[#Red]--> create_hotel
+super_admin -[#Red]--> create_booking
+super_admin -[#Red]--> manage_bookings
+
+' Hotel Admin Permissions (Blue Arrows)
+hotel_admin -[#Blue]--> view_accounts
+hotel_admin -[#Blue]--> view_hotels
+hotel_admin -[#Blue]--> view_rooms
+hotel_admin -[#Blue]--> view_bookings:{own hotel}
+hotel_admin -[#Blue]--> create_room : {own hotel}
+hotel_admin -[#Blue]--> manage_rooms : {own hotel}
+hotel_admin -[#Blue]--> create_booking : {own hotel}
+hotel_admin -[#Blue]--> manage_bookings : {own hotel}
+
+caption **HotelAdmin can only manage rooms and bookings in their hotel.\nAnd can not Manage SuperAdmin**
+
+@enduml

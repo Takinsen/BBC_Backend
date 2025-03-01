@@ -9,7 +9,7 @@ const bookSchema = new mongoose.Schema({
     hotel_id : {
         type : mongoose.Schema.ObjectId , 
         ref : 'Hotel',
-        required: true
+        required: [true , 'Please add hotel id']
     },
     room_id : {
         type : mongoose.Schema.ObjectId , 
@@ -18,19 +18,21 @@ const bookSchema = new mongoose.Schema({
     },
     status : { 
         type : String , 
-        enum : ["pending", "accpet", "reject"] , 
+        enum : ["pending", "accept", "reject"],
         required : true ,
         default : "pending"
     },
-    member : {
-        adult : { type : Number , default : 0 },
-        child : { type : Number , default : 0 }
+    num_people : {
+        type: Number,
+        required: [true , 'Please add number of people']
     },
     check_in_date : {
-        type: Date
+        type: Date,
+        required: [true , 'Format date is YYYY-MM-DD']
     },
     check_out_date : {
-        type: Date
+        type: Date,
+        required: [true , 'Format date is YYYY-MM-DD']
     },
     created_at : {
         type: Date ,

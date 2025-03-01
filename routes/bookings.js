@@ -6,11 +6,11 @@ const router = express.Router();
 
 router.route('/')
     .get(protect , booking.getBookings)
-    .post(protect , authorize('hotel_admin' , 'user') , booking.addBooking);
+    .post(protect , authorize('super_admin','hotel_admin' , 'user') , booking.addBooking);
 
 router.route('/:id')
     .get(protect , booking.getBooking)
-    .put(protect , authorize('hotel_admin' , 'user') , booking.updateBooking)
-    .delete(protect , authorize('hotel_admin' , 'user') , booking.deleteBooking); 
+    .put(protect , authorize('super_admin','hotel_admin' , 'user') , booking.updateBooking)
+    .delete(protect , authorize('super_admin','hotel_admin' , 'user') , booking.deleteBooking); 
 
 export default router;
