@@ -32,11 +32,7 @@ const bookSchema = new mongoose.Schema({
     check_out_date : {
         type: Date
     },
-    created_at : {
-        type: Date ,
-        default: Date.now
-    }
-});
+} , { timestamps : true });
 
 const Booking = mongoose.model('Booking', bookSchema);
 export default Booking;
