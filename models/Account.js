@@ -79,7 +79,7 @@ accountSchema.pre('save' , async function(next){
 });
 
 accountSchema.methods.getSignedJwtToken = function(){
-    return jwt.sign({id:this._id , hotel_id:this.hotel_id} , process.env.JWT_SECRET,{
+    return jwt.sign({id:this._id , role: this.role , hotel_id:this.hotel_id} , process.env.JWT_SECRET,{
         expiresIn: process.env.JWT_EXPIRE
     });
 }

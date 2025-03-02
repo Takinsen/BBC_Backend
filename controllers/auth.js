@@ -7,14 +7,18 @@ export const register = async (req, res) => {
         // Check if email and tel already exists
         const { email , tel } = req.body;
 
+        // Validation
+
         const checkEmail = await Account.findOne({ email });
         const checkTel = await Account.findOne({ tel });
-        if(checkEmail || checkTel){
-            res.status(400).json({
-                success: false,
-                message: "Email or tel already exists , please try again"
-            });
-        }
+
+        if(checkEmail || checkTel) return res.status(400).json({
+            success: false,
+            message: "Email or tel already exists , please try again"
+        });
+
+        // Create account
+
         const account = await Account.create(req.body);
 
         sendTokenResponse(account , 200 , "Register successfully" , res);

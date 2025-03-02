@@ -6,10 +6,12 @@ import Room from '../models/Room.js';
 export const getBookings = async (req,res,next) => {
 
     let query;
-    // General users can see only their Bookings!
+
+    console.log(req.user.role);
+
     if(req.user.role === 'hotel_admin'){
 
-        if(!req.user.hotel_id) return res.status(400).json("Only hotel admin with hotel_id can view hotel's booking");
+        if(!req.user.hotel_id) return res.status(404).json("Only hotel admin with hotel_id can view hotel's booking");
 
         query = Booking.find({hotel_id : req.user.hotel_id}).populate({
             path : 'account_id' , 
@@ -182,7 +184,7 @@ export const addBooking = async (req,res,next) => {
             message: `the room in hotel with id ${req.body.hotel_id} is not available`
         });
 
-        if(alreadyBooking   ) return res.status(400).json({
+        if(alreadyBooking) return res.status(400).json({
             success: false , 
             message: `You already booking this room`
         });
@@ -196,6 +198,7 @@ export const addBooking = async (req,res,next) => {
             message : "Create booking successfully",
             booking
         });
+
     } catch (err) {
         console.log(err.stack);
         res.status(500).json({
@@ -218,16 +221,26 @@ export const updateBooking = async (req,res,next) => {
             message: `No booking with the id of ${req.params.id}`
         });
 
-        if(bookingExist.account_id.toString() !== req.user.id && req.user.role !== 'super_admin'){
-            return res.status(401).json({
+        if(account.role === 'user'){
+    
+            if(bookingExist.account_id.toString() !== req.user.id) return res.status(401).json({
                 success: false , 
-                message: `The user with the id ${req.user.id} is not authorized to update this booking`
+                message: `The user with the id ${req.user.id} is not authorized to edit this booking`
             });
-        }
+    
+        } else if(account.role === 'hotel_admin'){
+    
+            if(bookingExist.hotel_id.toString() !== req.user.hotel_id) return res.status(401).json({
+                success: false , 
+                message: `The hotel admin with the id ${req.user.id} 
+                in hotel with id ${req.user.hotel_id} is not authorized to edit this booking`
+            });
+    
+        } 
 
         // Updating
 
-        booking = await Booking.findByIdAndUpdate(
+        const updated_booking = await Booking.findByIdAndUpdate(
             req.params.id , 
             req.body ,
             { new : true , runValidators: true}
@@ -235,7 +248,7 @@ export const updateBooking = async (req,res,next) => {
 
         res.status(200).json({
             success : true,
-            updated_booking : booking
+            updated_booking
         });
 
     } catch (err) {
@@ -251,26 +264,37 @@ export const updateBooking = async (req,res,next) => {
 export const deleteBooking = async (req,res,next) => {
     try {
 
-        let booking = await Booking.findById(req.params.id);
+        // Validation
+
+        const bookingExist = await bookingExistValidation(req.params.id);
         
-        if(!booking) return res.status(404).json({
+        if(!bookingExist) return res.status(404).json({
             success: false , 
             message: `No booking with the id of ${req.params.id}`
         });
 
-        // Ownership
-        if(booking.account_id.toString() !== req.user.id && req.user.role !== 'admin'){
-            return res.status(401).json({
+        if(account.role === 'user'){
+    
+            if(bookingExist.account_id.toString() !== req.user.id) return res.status(401).json({
                 success: false , 
-                message: `The account with ID ${req.user.id} is not authorized to delete this booking`
+                message: `The user with the id ${req.user.id} is not authorized to delete this booking`
             });
-        }
+    
+        } else if(account.role === 'hotel_admin'){
+    
+            if(bookingExist.hotel_id.toString() !== req.user.hotel_id) return res.status(401).json({
+                success: false , 
+                message: `The hotel admin with the id ${req.user.id} 
+                in hotel with id ${req.user.hotel_id} is not authorized to delete this booking`
+            });
+    
+        } 
 
-        await Booking.deleteOne();
+        const deleted_booking = await Booking.findByIdAndDelete(req.params.id);
 
         res.status(200).json({
             success : true,
-            deleted_booking : booking
+            deleted_booking
         });
     } catch (err) {
         console.log(err.stack);
@@ -289,14 +313,47 @@ export const acceptBooking = async (req,res,next) => {
 
     try{
 
+        // Validation
+
+        const bookingExist = await bookingExistValidation(req.params.id);
+        
+        if(!bookingExist) 
+            return res.status(404).json({
+                success: false , 
+                message: `No booking with the id of ${req.params.id}`
+            });
+
+        if(bookingExist.status !== 'pending')
+            return res.status(404).json({
+                success: false , 
+                message: `Booking status must be pending`
+            });
+
+        if(req.user.role === 'user') 
+            return res.status(401).json({
+                success: false , 
+                message: `The user with the id ${req.user.id} is not authorized to delete this booking`
+            });
+    
+        else if(req.user.role === 'hotel_admin' && bookingExist.hotel_id.toString() !== req.user.hotel_id.toString())
+            return res.status(401).json({
+                success: false , 
+                message: `The hotel admin with the id ${req.user.id} 
+                in hotel with id ${req.user.hotel_id} is not authorized to delete this booking`
+            });
+    
+        // Accept booking
+
         const accepted_booking = await Booking.findByIdAndUpdate(
             req.params.id , 
             { $set : { status : 'accept' }},
             { new : true , runValidators : true }
         );
 
+        // Reject all booking which pending this room
+
         const reject_booking = await Booking.updateMany(
-            { hotel_id : booking.hotel_id , room_id : booking.hotel_id , status : 'pending' } , 
+            { room_id : accepted_booking.room_id , status : 'pending' } , 
             { $set : { status : 'reject' }},
             { new : true , runValidators : true }
         );
@@ -323,7 +380,38 @@ export const rejectBooking = async (req,res,next) => {
 
     try{
 
-        const booking = await Booking.findByIdAndUpdate(
+        // Validation
+
+        const bookingExist = await bookingExistValidation(req.params.id);
+        
+        if(!bookingExist) 
+            return res.status(404).json({
+                success: false , 
+                message: `No booking with the id of ${req.params.id}`
+            });
+
+        if(bookingExist.status !== 'pending')
+            return res.status(404).json({
+                success: false , 
+                message: `Booking status must be pending`
+            });
+
+        if(req.user.role === 'user') 
+            return res.status(401).json({
+                success: false , 
+                message: `The user with the id ${req.user.id} is not authorized to delete this booking`
+            });
+    
+        else if(req.user.role === 'hotel_admin' && bookingExist.hotel_id.toString() !== req.user.hotel_id.toString())
+            return res.status(401).json({
+                success: false , 
+                message: `The hotel admin with the id ${req.user.id} 
+                in hotel with id ${req.user.hotel_id} is not authorized to delete this booking`
+            });
+
+        // Reject booking
+
+        const reject_booking = await Booking.findByIdAndUpdate(
             req.params.id , 
             { $set : { status : 'reject' }},
             { new : true , runValidators : true }
@@ -332,7 +420,7 @@ export const rejectBooking = async (req,res,next) => {
         res.status(200).json({
             success : true,
             message : "Reject booking successfully",
-            reject_booking : booking
+            reject_booking
         });
 
 
@@ -363,10 +451,8 @@ const RoomExistValidation = async (room_id , hotel_id) => {
 const bookingExistValidation = async (booking_id) => {
     // Check if booking existed
     const booking = await Booking.findById(booking_id);
-    if(!booking) return res.status(404).json({
-        success: false , 
-        message: `No booking with the id of ${booking_id}`
-    });
+    console.log(booking);
+    return booking;
 }
 
 const alreadyBookingValidation = async (account_id , hotel_id , room_id) => {
@@ -379,5 +465,9 @@ const alreadyBookingValidation = async (account_id , hotel_id , room_id) => {
     });
 
     return already_booking;
+
+}
+
+const ownershipValidation = async (account , booking_id) => {
 
 }
