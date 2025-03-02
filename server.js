@@ -7,6 +7,8 @@ import cookieParser from 'cookie-parser';
 import mongoSanitize from 'express-mongo-sanitize';
 import { xss } from 'express-xss-sanitizer';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import hpp from 'hpp';
 
 // Function
 import { connectDB } from './config/db.js';
@@ -40,6 +42,16 @@ app.use(helmet());
 
 //Prevent XSS attacks
 app.use(xss());
+
+//Prevent http param pollutions
+app.use(hpp());
+
+//Rate Limiting
+const limiter=rateLimit({
+    windowsMs:10*60*1000,
+    max: 120
+    });
+app.use(limiter);
 
 // API Routes 
 app.use('/api/auth' , auth);
