@@ -5,11 +5,11 @@ import bcrypt from 'bcryptjs';
 const accountSchema = new mongoose.Schema({
     first_name: {
         type: String, 
-        required: true
+        required: [true, 'Please add a first name']
     },
     last_name: {
         type: String, 
-        required: true
+        required: [true, 'Please add a last name']
     },
     tel: {
         type: String,
