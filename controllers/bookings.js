@@ -124,7 +124,7 @@ export const getBooking = async (req,res,next) => {
 
         if(!booking) return res.status(404).json({
             success: false , 
-            message: `No booking with the id of ${req.params.id}`
+            message: `No booking with the id of ${req.params.id} or you are not authorized to view this booking`
         });
 
         res.status(200).json({
