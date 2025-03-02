@@ -220,7 +220,7 @@ export const addBooking = async (req, res, next) => {
         if (!await isRoomCapacityValid(room.id, num_people)) {
             return res.status(400).json({
                 success: false,
-                message: `The room with id ${room.id} cannot handle ${num_people} people`,
+                message: `The room with id ${room_number} cannot handle ${num_people} people`,
             });
         }
 
@@ -325,7 +325,7 @@ export const updateBooking = async (req, res, next) => {
                 if (!await isRoomCapacityValid(room.id, updateNumPeople)) {
                     return res.status(400).json({
                         success: false,
-                        message: `The room with id ${room.id} cannot handle ${updateNumPeople} people`
+                        message: `The room with id ${room_number} cannot handle ${updateNumPeople} people`
                     });
                 }
 
@@ -357,7 +357,7 @@ export const updateBooking = async (req, res, next) => {
                 if (!await isRoomCapacityValid(room.id, booking.num_people)) {
                     return res.status(400).json({
                         success: false,
-                        message: `The room with id ${room.id} cannot handle ${booking.num_people} people`
+                        message: `The room with id ${room_number} cannot handle ${booking.num_people} people`
                     });
                 }
 
@@ -368,7 +368,7 @@ export const updateBooking = async (req, res, next) => {
             if (updateNumPeople && !await isRoomCapacityValid(booking.room_id, updateNumPeople)) {
                 return res.status(400).json({
                     success: false,
-                    message: `The room with id ${booking.room_id} cannot handle ${updateNumPeople} people`
+                    message: `The room with id ${booking.room_id.room_number} cannot handle ${updateNumPeople} people`
                 });
             }
 
@@ -419,7 +419,7 @@ export const updateBooking = async (req, res, next) => {
                 if(!await isRoomCapacityValid(room.id, booking.num_people)){
                     return res.status(400).json({
                         success: false,
-                        message: `The room with id ${room.id} cannot handle ${booking.num_people} people`
+                        message: `The room with id ${room_number} cannot handle ${booking.num_people} people`
                     });
                  }
 
@@ -488,7 +488,7 @@ export const updateBooking = async (req, res, next) => {
                 if(!await isRoomCapacityValid(room.id, booking.num_people)){
                      return res.status(400).json({
                           success: false,
-                          message: `The room with id ${room.id} cannot handle ${booking.num_people} people`
+                          message: `The room with id ${room_number} cannot handle ${booking.num_people} people`
                      });
                 }
 

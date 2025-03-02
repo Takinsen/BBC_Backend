@@ -1,6 +1,7 @@
 // Import model
 import Hotel from '../models/Hotel.js';
 import Booking from '../models/Booking.js';
+import Room from '../models/Room.js';
 
 export const getHotels = async(req , res , next) => {
     let query;
@@ -93,6 +94,29 @@ export const getHotel = async (req , res , next) => {
         res.status(500).json({success: false , error : err.stack});
     }
 }
+
+export const getRoomInHotel = async (req , res , next) => {
+    try{
+        const hotel = await Hotel.findById(req.params.id).populate('bookings');
+
+        if(!hotel) 
+            return res.status(400).json({
+                success: false , 
+                message : `Cannot find hotel with the id : ${req.params.id}`
+            });
+
+        const room = await Room.find({ hotel_id : req.params.id });
+
+        res.status(200).json({
+            success: true,
+            hotel,
+            room
+        });
+
+    } catch(err){
+        res.status(500).json({success: false , error : err.stack});
+    }
+};
 
 export const createHotel = async (req , res , next) => {
     try{
