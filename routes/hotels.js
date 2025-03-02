@@ -8,6 +8,9 @@ router.route('/')
 .get(hotel.getHotels)
 .post(protect , authorize('super_admin') , hotel.createHotel);
 
+router.route('/nearest')
+    .get(hotel.getNearestHotel);
+
 router.route('/:id')
 .get(hotel.getHotel)
 .put(protect , authorize('super_admin') , hotel.updateHotel)

@@ -158,3 +158,68 @@ export const deleteHotel = async(req , res , next) => {
         res.status(500).json({success: false , error : err.stack});
     }
 }
+
+export const getNearestHotel = async (req, res, next) => {
+    try {
+        const { latitude, longitude } = req.query;
+
+        if (!latitude || !longitude) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide latitude and longitude in the request query',
+            });
+        }
+
+        const hotels = await Hotel.find();
+
+        if (!hotels.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'No hotels found',
+            });
+        }
+
+        // Haversine formula to calculate distance between two points
+        const toRad = (value) => (value * Math.PI) / 180;
+
+        const getDistance = (lat1, lon1, lat2, lon2) => {
+            const R = 6371; // Earth's radius in km
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) *
+                    Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) *
+                    Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in km
+        };
+
+        // Find the nearest hotel
+        let nearestHotel = null;
+        let minDistance = Infinity;
+
+        hotels.forEach((hotel) => {
+            const distance = getDistance(
+                parseFloat(latitude),
+                parseFloat(longitude),
+                hotel.location.latitude,
+                hotel.location.longtitude // Note: Check spelling in your database
+            );
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestHotel = hotel;
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            nearest_hotel: nearestHotel,
+            distance: `${minDistance.toFixed(2)} km`,
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.stack });
+    }
+};
