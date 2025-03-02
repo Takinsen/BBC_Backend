@@ -25,7 +25,7 @@ export const getBookings = async (req,res,next) => {
     }
     else if(req.user.role === 'user'){
 
-        query = Booking.find({user_id : req.user.id}).populate({
+        query = Booking.find({account_id : req.user.id}).populate({
             path : 'account_id' , 
             select : 'first_name last_name' 
         }).populate({
@@ -182,7 +182,7 @@ export const addBooking = async (req,res,next) => {
             message: `the room in hotel with id ${req.body.hotel_id} is not available`
         });
 
-        if(alreadyBooking) return res.status(400).json({
+        if(alreadyBooking   ) return res.status(400).json({
             success: false , 
             message: `You already booking this room`
         });
@@ -211,14 +211,14 @@ export const updateBooking = async (req,res,next) => {
 
         // Validation
 
-        let booking = await Booking.findById(req.params.id);
+        const bookingExist = await bookingExistValidation(req.params.id);
         
-        if(!booking) return res.status(404).json({
+        if(!bookingExist) return res.status(404).json({
             success: false , 
             message: `No booking with the id of ${req.params.id}`
         });
 
-        if(booking.account_id.toString() !== req.user.id && req.user.role !== 'admin'){
+        if(bookingExist.account_id.toString() !== req.user.id && req.user.role !== 'super_admin'){
             return res.status(401).json({
                 success: false , 
                 message: `The user with the id ${req.user.id} is not authorized to update this booking`
@@ -369,17 +369,15 @@ const bookingExistValidation = async (booking_id) => {
     });
 }
 
-const alreadyBookingValidation = async (user_id , hotel_id , room_id) => {
+const alreadyBookingValidation = async (account_id , hotel_id , room_id) => {
 
     // Check if user already booking this room in hotel
-    const is_already_booking = await Booking.findOne({
-        user_id,
+    const already_booking = await Booking.findOne({
+        account_id,
         hotel_id,
         room_id
     });
 
-    if(is_already_booking) return false;
-
-    return true;
+    return already_booking;
 
 }
