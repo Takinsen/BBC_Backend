@@ -15,7 +15,7 @@ export const getBookings = async (req,res,next) => {
             select : 'first_name last_name' 
         }).populate({
             path : 'hotel_id' , 
-            select : 'name tel address' 
+            select : 'hotel_name tel address' 
         }).populate({
             path : 'room_id' , 
             select : 'room_number capacity price_per_night' 
@@ -29,7 +29,7 @@ export const getBookings = async (req,res,next) => {
             select : 'first_name last_name' 
         }).populate({
             path : 'hotel_id' , 
-            select : 'name tel address' 
+            select : 'hotel_name tel address' 
         }).populate({
             path : 'room_id' , 
             select : 'room_number capacity price_per_night' 
