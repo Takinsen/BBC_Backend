@@ -1,0 +1,59 @@
+@startuml HotelBookingSystem Sequence Diagram
+title Hotel Bookings System Sequence Diagram
+
+participant "User\n(user,\nhotel_admin,\nsuper_admin)" as User
+participant "<<javaScript>>\n:server.js" as Server
+participant "<<router>>\n:router" as Router
+participant "<<middleware>>\n:protect" as Protect
+participant "<<middleware>>\n:authorize" as Auth
+participant "<<controller>>\n:bookings" as Bookings
+participant "<<model>>\n:Bookings" as Booking_model
+participant "<<model>>\n:Room" as Room_model
+participant "<<model>>\n:Hotel" as Hotel_model
+participant "<<model>>\n:Account" as Account_model
+database "<<MongoDB>>\n:HotelBookingDB" as HotelBookingDB
+
+== Update Bookings ==
+User -> Server ++: req.post('/api/bookings')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Auth ++: authorize('super_admin', 'hotel_admin', 'user')
+Auth --> User --: response 403
+Auth -> Bookings ++: updateBooking()
+
+' check booking
+Bookings -> Booking_model ++:findById({req.params.id})
+Booking_model -> HotelBookingDB ++: query booking
+HotelBookingDB --> Booking_model --: booking
+Booking_model --> Bookings --: booking
+Bookings -> User --: response 404, 401, 403,
+note left of Bookings:User\n- Booking not found(404)\n- User only update their booking(401)\n- To update hotel,must only delete booking(403)\n - Cannot update booking status 'accept or reject'(403)
+
+note right of Bookings: - Each Role can update different fields
+Bookings --> Bookings ++: Update check-in, check-out
+Bookings -> Bookings --: isBookingDateValid()
+Bookings --> User --: response 400
+
+Bookings --> Bookings ++: Update room_number
+Bookings --> Bookings ++: Update num_people
+Bookings -> Room_model ++: findOne({req.body.room_number, hotel_id})
+Room_model -> HotelBookingDB ++: query room
+HotelBookingDB --> Room_model --: room
+Room_model --> Bookings --: room
+Bookings --> User --: response 404
+Bookings -> Bookings ++: isRoomAvailable()
+Bookings --> User --: response 400
+note left of Bookings: - Room not Available
+Bookings --> Bookings ++: isRoomCapacityValid()
+Bookings --> User --: response 400
+
+Bookings --> Bookings ++: Update status ({req.body.status})
+Bookings --> User --: response 403 or 400
+note left of Bookings: - ['accept','pending','reject']
+Bookings --> Booking_model ++: booking.save()
+Booking_model -> HotelBookingDB ++: updated BookingSchema
+HotelBookingDB --> Booking_model --: updated Bookings
+Booking_model --> Bookings --: updated Bookings
+Bookings --> User --: response
+@enduml

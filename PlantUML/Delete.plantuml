@@ -1,0 +1,31 @@
+@startuml HotelBookingSystem Sequence Diagram
+title Hotel Bookings System Sequence Diagram
+
+participant "User\n(user,\nhotel_admin,\nsuper_admin)" as User
+participant "<<javaScript>>\n:server.js" as Server
+participant "<<router>>\n:router" as Router
+participant "<<middleware>>\n:protect" as Protect
+participant "<<middleware>>\n:authorize" as Auth
+participant "<<controller>>\n:bookings" as Bookings
+participant "<<model>>\n:Bookings" as Booking_model
+participant "<<model>>\n:Room" as Room_model
+participant "<<model>>\n:Hotel" as Hotel_model
+participant "<<model>>\n:Account" as Account_model
+database "<<MongoDB>>\n:HotelBookingDB" as HotelBookingDB
+
+== Delete Booking ==
+User -> Server ++: req.delete('/api/bookings/:id')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Auth ++: authorize('super_admin', 'hotel_admin', 'user')
+Auth --> User --: response 403
+Auth -> Bookings ++: deleteBooking()
+
+Bookings -> Booking_model ++:findById({req.params.id})
+Booking_model -> HotelBookingDB ++: query booking
+HotelBookingDB --> Booking_model --: booking
+Booking_model --> Bookings --: booking
+Bookings -> User --: response 404,401,403
+note left of Bookings: - Booking not found(404)\n- User only delete their booking(401)\n- Hotel Admin only delete their hotel booking(403)
+@enduml

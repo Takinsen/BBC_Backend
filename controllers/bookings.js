@@ -416,6 +416,13 @@ export const updateBooking = async (req, res, next) => {
                     });
                 }
 
+                if(!await isRoomCapacityValid(room.id, booking.num_people)){
+                    return res.status(400).json({
+                        success: false,
+                        message: `The room with id ${room.id} cannot handle ${booking.num_people} people`
+                    });
+                 }
+
                 booking.room_id = room.id;
             }
 
@@ -458,6 +465,10 @@ export const updateBooking = async (req, res, next) => {
                 booking.check_out_date = req.body.check_out_date;
             }
 
+            booking.status = req.body.status || booking.status;
+            booking.num_people = req.body.num_people || booking.num_people;
+            booking.hotel_id = req.body.hotel_id || booking.hotel_id;
+
             if (req.body.room_number) {
                 const room = await Room.findOne({ room_number: req.body.room_number, hotel_id: booking.hotel_id });
                 if (!room) {
@@ -472,6 +483,13 @@ export const updateBooking = async (req, res, next) => {
                         success: false,
                         message: `The room is not available for the selected dates`
                     });
+                }
+
+                if(!await isRoomCapacityValid(room.id, booking.num_people)){
+                     return res.status(400).json({
+                          success: false,
+                          message: `The room with id ${room.id} cannot handle ${booking.num_people} people`
+                     });
                 }
 
                 booking.room_id = room.id;
