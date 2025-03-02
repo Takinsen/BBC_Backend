@@ -5,6 +5,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import mongoSanitize from 'express-mongo-sanitize';
+import { xss } from 'express-xss-sanitizer';
+import helmet from 'helmet';
 
 // Function
 import { connectDB } from './config/db.js';
@@ -30,8 +32,14 @@ app.use(express.json());
 // Cookie parser
 app.use(cookieParser());
 
-//Sanitize data
+// Sanitize data
 app.use(mongoSanitize());
+
+// Set security headers
+app.use(helmet());
+
+//Prevent XSS attacks
+app.use(xss());
 
 // API Routes 
 app.use('/api/auth' , auth);
