@@ -187,6 +187,8 @@ export const getNearestHotel = async (req, res, next) => {
     try {
         const { latitude, longitude } = req.query;
 
+        const limit = req.query.limit ? req.query.limit : 3;
+
         if (!latitude || !longitude) {
             return res.status(400).json({
                 success: false,
@@ -220,28 +222,24 @@ export const getNearestHotel = async (req, res, next) => {
             return R * c; // Distance in km
         };
 
-        // Find the nearest hotel
-        let nearestHotel = null;
-        let minDistance = Infinity;
-
-        hotels.forEach((hotel) => {
-            const distance = getDistance(
+        // Calculate distances and sort for all hotels
+        const sortedHotels = hotels.map((hotel) => ({
+            hotel,
+            distance: getDistance(
                 parseFloat(latitude),
                 parseFloat(longitude),
                 hotel.location.latitude,
-                hotel.location.longtitude // Note: Check spelling in your database
-            );
+                hotel.location.longtitude
+            ),
+        })).sort((a, b) => a.distance - b.distance);
 
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestHotel = hotel;
-            }
-        });
-
+        // Return the nearest `limit` hotels
         res.status(200).json({
             success: true,
-            nearest_hotel: nearestHotel,
-            distance: `${minDistance.toFixed(2)} km`,
+            nearest_hotels: sortedHotels.slice(0, limit).map(({ hotel, distance }) => ({
+                hotel,
+                distance: `${distance.toFixed(2)} km`,
+            })),
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.stack });
