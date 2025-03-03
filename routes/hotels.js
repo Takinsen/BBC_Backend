@@ -11,6 +11,9 @@ router.route('/')
 router.route('/nearest')
     .get(hotel.getNearestHotel);
 
+router.route('/popular')
+    .get(hotel.getPopularHotels);
+
 router.route('/:id')
 .get(hotel.getHotel)
 .put(protect , authorize('super_admin') , hotel.updateHotel)

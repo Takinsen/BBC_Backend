@@ -245,3 +245,40 @@ export const getNearestHotel = async (req, res, next) => {
         res.status(500).json({ success: false, error: err.stack });
     }
 };
+
+export const getPopularHotels = async (req, res, next) => {
+    try {
+        const limit = req.query.limit ? parseInt(req.query.limit, 10) : 3;
+
+        const popularHotels = await Hotel.aggregate([
+            {
+                $lookup: {
+                    from: 'bookings',           
+                    localField: '_id',          
+                    foreignField: 'hotel_id',   
+                    as: 'bookings'              
+                }
+            },
+            {
+                $addFields: {
+                    bookingCount: { $size: { $ifNull: ["$bookings", []] } }
+                }
+            },
+            {
+                $sort: { bookingCount: -1 }   
+            },
+            {
+                $limit: limit                 
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            count: popularHotels.length,
+            hotels: popularHotels
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.stack });
+    }
+};
+
