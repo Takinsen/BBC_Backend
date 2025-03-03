@@ -1,0 +1,28 @@
+@startuml HotelBookingSystem Sequence Diagram
+title Hotel Bookings System Sequence Diagram
+
+participant "User\n(user,\nhotel_admin,\nsuper_admin)" as User
+participant "<<javaScript>>\n:server.js" as Server
+participant "<<router>>\n:router" as Router
+participant "<<middleware>>\n:protect" as Protect
+participant "<<middleware>>\n:authorize" as Auth
+participant "<<controller>>\n:bookings" as Bookings
+participant "<<model>>\n:Bookings" as Booking_model
+participant "<<model>>\n:Room" as Room_model
+participant "<<model>>\n:Hotel" as Hotel_model
+participant "<<model>>\n:Account" as Account_model
+database "<<MongoDB>>\n:HotelBookingDB" as HotelBookingDB
+
+== Get All Bookings ==
+User -> Server ++: req.get('/api/bookings')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Bookings ++: getBookings()
+Bookings -> Booking_model ++: find() based on role
+note right of Booking_model: Role-based filtering:\n- User → {req.user.id}\n- Hotel Admin → {req.user.hotel_id}\n- Super Admin → no filter
+Booking_model -> HotelBookingDB ++: query all bookings
+HotelBookingDB --> Booking_model --: all bookings
+Booking_model --> Bookings --: all bookings
+Bookings --> User --: response
+@enduml

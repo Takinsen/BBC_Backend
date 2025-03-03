@@ -16,4 +16,7 @@ router.route('/:id')
 .put(protect , authorize('super_admin') , hotel.updateHotel)
 .delete(protect , authorize('super_admin') , hotel.deleteHotel);
 
+router.route('/:id/rooms')
+.get(hotel.getRoomInHotel)
+
 export default router;

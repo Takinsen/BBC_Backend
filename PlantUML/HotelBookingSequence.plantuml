@@ -1,0 +1,147 @@
+@startuml HotelBookingSystem Sequence Diagram
+title Hotel Bookings System Sequence Diagram
+
+participant "User\n(user,\nhotel_admin,\nsuper_admin)" as User
+participant "<<javaScript>>\n:server.js" as Server
+participant "<<router>>\n:router" as Router
+participant "<<middleware>>\n:protect" as Protect
+participant "<<middleware>>\n:authorize" as Auth
+participant "<<controller>>\n:bookings" as Bookings
+participant "<<model>>\n:Bookings" as Booking_model
+participant "<<model>>\n:Room" as Room_model
+participant "<<model>>\n:Hotel" as Hotel_model
+participant "<<model>>\n:Account" as Account_model
+database "<<MongoDB>>\n:HotelBookingDB" as HotelBookingDB
+
+== Get All Bookings ==
+User -> Server ++: req.get('/api/bookings')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Bookings ++: getBookings()
+Bookings -> Booking_model ++: find() based on role
+note right of Booking_model: Role-based filtering:\n- User → {req.user.id}\n- Hotel Admin → {req.user.hotel_id}\n- Super Admin → no filter
+Booking_model -> HotelBookingDB ++: query all bookings
+HotelBookingDB --> Booking_model --: all bookings
+Booking_model --> Bookings --: all bookings
+Bookings --> User --: response
+
+== Get Bookings by ID ==
+User -> Server ++: req.get('/api/bookings/:id')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Bookings ++: getBooking()
+Bookings -> Booking_model ++: findOne({req.params.id, role-based filter })
+note right of Booking_model: Role-based filtering:\n- User → {req.params.id,req.user.id }\n- Hotel Admin → {req.params.id,req.user.hotel_id }\n- Super Admin → {req.params.id} (no filter)
+Booking_model -> HotelBookingDB ++: query get a Bookings
+HotelBookingDB --> Booking_model --: a Bookings
+Booking_model --> Bookings --: a Bookings
+Bookings -> User --: response
+
+
+== Add Bookings ==
+User -> Server ++: req.post('/api/bookings')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Auth ++: authorize('super_admin', 'hotel_admin', 'user')
+Auth --> User --: response 403
+Auth -> Bookings ++: addBooking()
+
+' check out <= check in
+Bookings --> User --: response 400
+note left of Bookings: - Check-out date must be \nafter check-in date (400)
+
+' find hotel
+Bookings -> Hotel_model ++: findById({req.body.hotel_id})
+Hotel_model -> HotelBookingDB ++: query hotel
+HotelBookingDB --> Hotel_model --: hotel_id
+Hotel_model --> Bookings --: hotel_id
+Bookings --> User --: response 400, 401, 403 or 404
+note left of Bookings: - Hotel not found(404)\n- User only book 3 nights(400)\n- Hotel only book their hotel(403)
+' find room
+Bookings --> Room_model ++: findOne({req.body.room_number, hotel_id})
+Room_model -> HotelBookingDB ++: query room
+HotelBookingDB --> Room_model --: room
+Room_model --> Bookings --: room
+Bookings --> User --: response 404
+' check booking
+Bookings -> Booking_model ++:findOne({req.body.account_id,hotel_id,room.id})
+Booking_model -> HotelBookingDB ++: query Bookings
+HotelBookingDB --> Booking_model --: Bookings
+Booking_model --> Bookings --: Bookings
+Bookings -> Bookings ++: isAlreadyBooking
+Bookings -> Bookings ++: isRoomAvailable()
+Bookings -> Bookings ++: isRoomCapacityValid()
+Bookings --> User --: response 400
+note left of Bookings: - Already Booked\n- Room not Available\n- Room Capacity cant handle
+' create booking
+Bookings -> Booking_model ++: create(req.body)
+Booking_model -> HotelBookingDB ++: BookingSchema
+HotelBookingDB --> Booking_model --: new Bookings
+Booking_model --> Bookings --: new Bookings
+Bookings --> User --: response
+
+== Update Bookings ==
+User -> Server ++: req.post('/api/bookings')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Auth ++: authorize('super_admin', 'hotel_admin', 'user')
+Auth --> User --: response 403
+Auth -> Bookings ++: updateBooking()
+
+' check booking
+Bookings -> Booking_model ++:findById({req.params.id})
+Booking_model -> HotelBookingDB ++: query booking
+HotelBookingDB --> Booking_model --: booking
+Booking_model --> Bookings --: booking
+Bookings -> User --: response 404, 401, 403,
+note left of Bookings:User\n- Booking not found(404)\n- User only update their booking(401)\n- To update hotel,must only delete booking(403)\n - Cannot update booking status 'accept or reject'(403)
+
+note right of Bookings: - Each Role can update different fields
+Bookings --> Bookings ++: Update check-in, check-out
+Bookings -> Bookings --: isBookingDateValid()
+Bookings --> User --: response 400
+
+Bookings --> Bookings ++: Update room_number
+Bookings --> Bookings ++: Update num_people
+Bookings -> Room_model ++: findOne({req.body.room_number, hotel_id})
+Room_model -> HotelBookingDB ++: query room
+HotelBookingDB --> Room_model --: room
+Room_model --> Bookings --: room
+Bookings --> User --: response 404
+Bookings -> Bookings ++: isRoomAvailable()
+Bookings --> User --: response 400
+note left of Bookings: - Room not Available
+Bookings --> Bookings ++: isRoomCapacityValid()
+Bookings --> User --: response 400
+
+Bookings --> Bookings ++: Update status ({req.body.status})
+Bookings --> User --: response 403 or 400
+note left of Bookings: - ['accept','pending','reject']
+Bookings --> Booking_model ++: booking.save()
+Booking_model -> HotelBookingDB ++: updated BookingSchema
+HotelBookingDB --> Booking_model --: updated Bookings
+Booking_model --> Bookings --: updated Bookings
+Bookings --> User --: response
+
+
+== Delete Booking ==
+User -> Server ++: req.delete('/api/bookings/:id')
+Server -> Router ++: app.use('/api/bookings', bookings)
+Router -> Protect ++: protect(req, res, next)
+Protect --> User --: response 401, 404 or 403
+Protect -> Auth ++: authorize('super_admin', 'hotel_admin', 'user')
+Auth --> User --: response 403
+Auth -> Bookings ++: deleteBooking()
+
+Bookings -> Booking_model ++:findById({req.params.id})
+Booking_model -> HotelBookingDB ++: query booking
+HotelBookingDB --> Booking_model --: booking
+Booking_model --> Bookings --: booking
+Bookings -> User --: response 404,401,403
+note left of Bookings: - Booking not found(404)\n- User only delete their booking(401)\n- Hotel Admin only delete their hotel booking(403)
+
+@enduml
