@@ -24,7 +24,8 @@ const bookSchema = new mongoose.Schema({
     },
     num_people : {
         type: Number,
-        required: [true , 'Please add number of people']
+        required: [true , 'Please add number of people'],
+        min: [1, 'Number of people must be at least 1']
     },
     check_in_date : {
         type: Date,

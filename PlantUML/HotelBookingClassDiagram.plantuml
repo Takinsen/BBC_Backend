@@ -1,0 +1,72 @@
+@startuml HotelBookingClassDiagram
+
+skinparam Linetype ortho
+
+
+
+entity "Hotel" as hotel {
+    + id : ObjectId <<generated>>
+    --
+    * hotel_name : String
+    * tel : String format xxx-xxx-xxxx contains 10 digits
+    * address : Array {city:String, street_name:String, street_address:String, zipcode:String 5 digits}
+    * location : Array {latitude:Number, longtitude:Number}
+}
+entity "Room" as room {
+    + id : ObjectId <<generated>>
+    --
+    * hotel_id : ObjectId <<FK>>
+    * room_number : String
+    * capacity : Number
+    * price_per_night : Number
+}
+
+entity "Account" as account{
+    + id : ObjectId <<generated>>
+    --
+    * first_name : String
+    * last_name : String
+    * tel : String format xxx-xxx-xxxx contains 10 digits
+    * email : String format email
+    * password : String 
+    * role : String enum
+    * hotel_id : ObjectId <<FK>> default null
+    * created_at : Date
+}
+
+enum "Role" as role{
+    USER
+    HOTEL_ADMIN
+    SUPER_ADMIN
+}
+
+enum "Status" as status{
+    PENDING
+    ACCEPT
+    REJECT
+}
+
+entity "Booking" as booking{
+    + id : ObjectId <<generated>>
+    --
+    * account_id : ObjectId <<FK>>
+    * hotel_id : ObjectId <<FK>>
+    * room_id : ObjectId <<FK>>
+    * status : String enum
+    * num_people : Number
+    * check_in : Date format YYYY-MM-DD
+    * check_out : Date format YYYY-MM-DD
+    * created_at : Date
+}
+
+' Relationships with Crow's Foot Notation
+hotel ||..o{room
+account o-o|hotel
+account ||-o{booking
+account -up-> role : has
+hotel ||--o{booking
+room ||--o{booking
+
+booking -right->status : has
+
+@enduml
