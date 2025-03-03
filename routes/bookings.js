@@ -13,7 +13,4 @@ router.route('/:id')
     .put(protect , authorize('super_admin','hotel_admin' , 'user') , booking.updateBooking)
     .delete(protect , authorize('super_admin','hotel_admin' , 'user') , booking.deleteBooking); 
 
-router.route('/:id/accept').put(protect , authorize('hotel_admin') , booking.acceptBooking);
-router.route('/:id/reject').put(protect , authorize('hotel_admin') , booking.rejectBooking);
-
 export default router;
