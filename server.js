@@ -3,6 +3,7 @@
 // Library
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoSanitize from 'express-mongo-sanitize';
 import { xss } from 'express-xss-sanitizer';
@@ -45,6 +46,14 @@ app.use(xss());
 
 //Prevent http param pollutions
 app.use(hpp());
+
+const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.tanakrit.site'];
+
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 //Rate Limiting
 const limiter=rateLimit({
