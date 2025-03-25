@@ -1,0 +1,144 @@
+@startuml Hotelclass
+left to right direction
+package "Hotel"{
+    class "<<Application>>\nHotelBookingService" as HotelBookingService{}
+
+    class "<<Resource>>\nHotels" as ResourceHotels{
+        <<GET>> +getHotels():Hotel
+        <<POST>> +createHotel():Hotel
+    }
+
+    class "<<Resource>>\nHotel" as ResourceHotel {
+        <<GET>> +getHotel(): Hotel
+        <<PUT>> +updateHotel(): Hotel
+        <<DELETE>> +deleteHotel(): void
+    }
+' Add this part
+    class "<<Resource>>\nHotel" as ResourceRoomsInHotel {
+        <<GET>> +getRoomsInHotel():Room
+    }
+
+    class "<<Resource>>\nRooms" as ResourceRooms{
+        <<GET>> +getRooms():Room
+        <<POST>> +createRoom():Room
+    }
+
+    class "<<Resource>>\nRoom" as ResourceRoom {
+        <<GET>> +getRoom(): Room
+        <<PUT>> +updateRoom(): Room
+        <<DELETE>> +deleteRoom(): void
+    }
+
+    class "<<Resource>>\nAccounts" as ResourceAccounts{
+        <<GET>> +getAccounts():Account
+    }
+
+    class "<<Resource>>\nAccount" as ResourceAccount {
+        <<GET>> +getAccount(): Account
+        <<PUT>> +updateAccount(): Account
+        <<DELETE>> +deleteAccount(): void
+    }
+
+    class "<<Resource>>\nBooking" as ResourceBookings {
+        <<GET>> +getBookings(): Booking
+        <<POST>> +addBooking(): Booking
+    }
+
+    class "<<Resource>>\nBooking" as ResourceBooking {
+        <<GET>> +getBooking(): Booking
+        <<PUT>> +updateBooking(): Booking
+        <<DELETE>> +deleteBooking(): void
+    }
+
+    class "<<Resoure>>\nAuthentication" as ResourceAuthentication {
+        <<GET>> +getMe(): Account
+        <<POST>> +register(): void
+        <<POST>> +login(): void
+        <<POST>> +logout(): void
+    }
+
+    class "<<Representation>>\nBooking" as RepresentationBooking {
+        -account_id
+        -hotel_id
+        -room_id
+        -status
+        -num_people
+        -check_in_date
+        -check_out_date
+        -created_at
+        -updated_at
+    }
+
+    class "<<Representation>>\nHotel" as RepresentationHotel {
+        -hotel_name
+        -tel
+        -address
+        --
+        -city
+        -street_name
+        -street_address
+        -zipcode
+        --
+        -location
+        --
+        -latitude
+        -longitude
+    }
+
+        class "<<Representation>>\nRoom" as RepresentationRoom {
+        -hotel_id
+        -room_number
+        -capacity
+        -price_per_night
+    }
+        class "<<Representation>>\nAccount" as Account {
+        -first_name
+        -last_name
+        -tel
+        -email
+        -password(encrypted/hashed)
+        -role
+        -hotel_id
+        -created_at
+        }
+        
+
+note right of RepresentationHotel::address
+    Address details:
+        
+        -city
+        -street_name
+        -street_address
+        -zipcode
+end note
+
+note left of RepresentationHotel::location
+    location details:
+        
+        -latitude
+        -longitude
+end note
+}
+
+HotelBookingService ..> ResourceHotels:"/hotels\n<<Path>>"
+HotelBookingService ..> ResourceRooms:"/rooms\n<<Path>>"
+HotelBookingService ..> ResourceAccounts:"/accounts\n<<Path>>"
+HotelBookingService ..> ResourceBookings:"/bookings\n<<Path>>"
+HotelBookingService ..> ResourceAuthentication:"/auth\n<<Path>>"
+
+ResourceHotels ..> ResourceHotel: "/{hotelId}\n<<Path>>"
+ResourceHotel ..> ResourceRoomsInHotel: "/rooms\n<<Path>>"
+ResourceRoomsInHotel ..> RepresentationHotel: "<<use>>"
+
+ResourceRooms ..> ResourceRoom: "/{roomId}\n<<Path>>"
+ResourceRoom ..> RepresentationRoom: "<<use>>"
+
+ResourceAccounts ..> ResourceAccount: "/{accountId}\n<<Path>>"
+ResourceAccount ..> Account: "<<use>>"
+
+ResourceBookings ..> ResourceBooking: "/{bookingId}\n<<Path>>"
+ResourceBooking ..> RepresentationBooking: "<<use>>"
+
+ResourceAuthentication ..> Account: "<<use>>"
+
+@enduml
