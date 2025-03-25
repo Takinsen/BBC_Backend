@@ -17,6 +17,11 @@ const roomSchema = new mongoose.Schema({
     price_per_night : {
         type : Number ,
         required : true
+    },
+    status : {
+        type: String ,
+        enum: ["available" , "pending" , "booked"],
+        default: "available"
     }
 });
 

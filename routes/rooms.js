@@ -10,7 +10,7 @@ router.route('/')
 
 router.route('/:id')
 .get(room.getRoom)
-.put(protect , authorize('super_admin','hotel_admin') , room.updateRoom)
+.put(protect , authorize('super_admin','hotel_admin','user') , room.updateRoom)
 .delete(protect , authorize('super_admin','hotel_admin') , room.deleteRoom);
 
 export default router;
