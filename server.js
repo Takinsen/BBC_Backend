@@ -47,13 +47,15 @@ app.use(xss());
 //Prevent http param pollutions
 app.use(hpp());
 
-const allowedOrigins = [process.env.FRONTEND_URL, 'https://www.tanakrit.site'];
+const allowedOrigins = [process.env.FRONTEND_URL];
 
 app.use(cors({
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+app.options('*', cors());
 
 //Rate Limiting
 const limiter=rateLimit({
